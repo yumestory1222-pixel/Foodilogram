@@ -1,35 +1,1092 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#4A8C5C" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Foodi Logram" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="description" content="음식 다이어트 기록 앱 — 사진/영상 촬영, 텍스트 오버레이, 콜라주" />
-    <link rel="manifest" href="./manifest.json" />
-    <link rel="apple-touch-icon" href="./icon-192.png" />
-    <title>Foodi Logram</title>
-    <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      html, body, #root { height: 100%; width: 100%; overflow-x: hidden; }
-      body { background: #F7F9F4; -webkit-tap-highlight-color: transparent; }
-    </style>
-    <script type="module" crossorigin src="./assets/index-B0F-XwJE.js"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-  
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(r => console.log('SW registered', r.scope))
-          .catch(e => console.warn('SW failed', e));
-      });
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"/>
+<meta name="theme-color" content="#4A8C5C"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="Foodi Logram"/>
+<title>🌿 Foodi Logram</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;width:100%;overflow:hidden;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+body{background:#F7F9F4;color:#1E2D1F;display:flex;flex-direction:column;max-width:430px;margin:0 auto;height:100dvh}
+button{font-family:inherit;cursor:pointer}
+textarea,input{font-family:inherit}
+:root{
+  --green:#4A8C5C;--greenDk:#2F6640;--greenLt:#8FBF9A;
+  --bg:#F7F9F4;--surface:#fff;--surface2:#EFF4EB;
+  --border:#DDE8D5;--text:#1E2D1F;--textSub:#6B8A6D;--textMute:#9EB89F;
+  --mint:#C8E6C9;--rec:#D94F3D;--white:#fff;
+}
+/* Header */
+#header{background:#fff;border-bottom:1px solid var(--border);padding:14px 20px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo-row{display:flex;align-items:center;gap:8px}
+.logo-icon{width:34px;height:34px;border-radius:10px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-name{font-size:16px;font-weight:800;color:var(--green);line-height:1}
+.logo-sub{font-size:9px;font-weight:600;color:var(--textMute);letter-spacing:2.5px;text-transform:uppercase}
+.stats{display:flex;gap:14px;align-items:center}
+.stat{text-align:center}
+.stat-num{font-size:18px;font-weight:700;line-height:1}
+.stat-lbl{font-size:9px;color:var(--textMute);margin-top:1px}
+.stat-div{width:1px;height:24px;background:var(--border)}
+/* Date strip */
+#datestrip{background:var(--surface2);padding:8px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;font-size:11px;color:var(--textSub)}
+#clock{font-size:13px;font-weight:700;color:var(--green);letter-spacing:1px}
+/* Content */
+#content{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+/* Nav */
+#nav{background:#fff;border-top:1px solid var(--border);display:flex;padding:8px 0 12px;flex-shrink:0;box-shadow:0 -4px 16px rgba(74,140,92,0.06)}
+.nav-btn{flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0}
+.nav-icon{width:36px;height:36px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .18s}
+.nav-icon.active{background:var(--green);box-shadow:0 3px 10px rgba(74,140,92,0.3)}
+.nav-lbl{font-size:10px;color:var(--textMute)}
+.nav-lbl.active{color:var(--green);font-weight:700}
+/* Camera */
+#cam-view{display:flex;flex-direction:column;flex:1}
+#vf-wrap{position:relative;margin:14px;border-radius:20px;overflow:hidden;aspect-ratio:4/3;background:#111;box-shadow:0 8px 30px rgba(74,140,92,0.15);flex-shrink:0}
+#cam-video{width:100%;height:100%;object-fit:cover;display:block}
+#cam-error{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:0 24px;display:none}
+.cam-error-emoji{font-size:52px}
+.cam-error-title{font-size:14px;font-weight:700;color:var(--textSub);text-align:center}
+.cam-error-msg{font-size:11px;color:var(--textMute);text-align:center;line-height:1.6}
+#retry-btn{background:var(--green);color:#fff;border:none;border-radius:10px;padding:10px 28px;font-size:13px;font-weight:700}
+#flash{position:absolute;inset:0;background:white;opacity:0;pointer-events:none;border-radius:20px;transition:opacity .1s}
+#countdown-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.3)}
+#countdown-num{font-size:80px;font-weight:900;color:var(--green)}
+#rec-badge{position:absolute;top:12px;left:14px;display:none;align-items:center;gap:6px;background:rgba(0,0,0,0.55);border-radius:20px;padding:4px 10px}
+.rec-dot{width:8px;height:8px;border-radius:50%;background:var(--rec);animation:pulse 1s infinite}
+#rec-txt{font-size:11px;color:var(--rec);font-weight:700;letter-spacing:1px}
+#ts-pill{position:absolute;bottom:12px;left:12px;background:rgba(30,45,31,0.6);border-radius:10px;padding:4px 10px;backdrop-filter:blur(4px)}
+#ts-pill span{font-size:14px;font-weight:700;color:rgba(250,252,248,0.95)}
+.corner{position:absolute;width:20px;height:20px}
+.corner.tl{top:14px;left:14px;border-top:2px solid rgba(74,140,92,0.7);border-left:2px solid rgba(74,140,92,0.7)}
+.corner.tr{top:14px;right:14px;border-top:2px solid rgba(74,140,92,0.7);border-right:2px solid rgba(74,140,92,0.7)}
+.corner.bl{bottom:14px;left:14px;border-bottom:2px solid rgba(74,140,92,0.7);border-left:2px solid rgba(74,140,92,0.7)}
+.corner.br{bottom:14px;right:14px;border-bottom:2px solid rgba(74,140,92,0.7);border-right:2px solid rgba(74,140,92,0.7)}
+/* Mode bar */
+.mode-bar{display:flex;margin:0 16px 12px;background:var(--surface2);border-radius:14px;padding:4px}
+.mode-btn{flex:1;padding:9px 0;border:none;background:transparent;border-radius:10px;font-size:13px;color:var(--textSub);transition:all .18s}
+.mode-btn.active{background:var(--green);color:#fff;font-weight:700}
+/* Controls */
+.controls{display:flex;align-items:center;justify-content:space-between;padding:0 20px 10px}
+.timer-row{display:flex;align-items:center;gap:8px}
+.timer-lbl{font-size:11px;color:var(--textSub);font-weight:500}
+.timer-pills{display:flex;gap:6px}
+.timer-pill{background:var(--surface2);border:none;border-radius:20px;padding:6px 14px;font-size:12px;color:var(--textSub);transition:all .18s}
+.timer-pill.active{background:var(--green);color:#fff;font-weight:700}
+.flip-btn{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:6px 12px;font-size:16px;color:var(--textSub)}
+/* Shutter */
+.shutter-wrap{display:flex;justify-content:center;padding-bottom:24px;padding-top:6px}
+.shutter-ring{position:absolute;width:90px;height:90px;border-radius:50%;border:2.5px solid rgba(74,140,92,0.35);margin-top:-5px}
+.shutter-ring.rec{border-color:rgba(217,79,61,0.4)}
+.shutter{width:80px;height:80px;border-radius:50%;background:var(--green);border:3.5px solid #fff;box-shadow:0 6px 20px rgba(74,140,92,0.35);display:flex;align-items:center;justify-content:center;position:relative}
+.shutter.rec-mode{background:var(--rec);box-shadow:0 6px 20px rgba(217,79,61,0.4)}
+.shutter-inner{width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+.shutter-inner.vid{width:24px;height:24px;border-radius:50%}
+.shutter-inner.stop{width:22px;height:22px;border-radius:4px}
+/* Gallery */
+#gallery-view{padding:16px;overflow-y:auto}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.toolbar-count{font-size:12px;color:var(--textMute)}
+.del-btn{background:none;border:1.5px solid var(--border);border-radius:10px;padding:6px 14px;font-size:12px;color:var(--textSub)}
+.cancel-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:6px 14px;font-size:12px;color:var(--textSub)}
+.confirm-del-btn{background:#D94F3D;border:none;border-radius:10px;padding:6px 14px;font-size:12px;font-weight:700;color:#fff}
+.confirm-del-btn:disabled{background:var(--surface2);color:var(--textMute)}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-title{font-size:13px;font-weight:600}
+.sec-badge{font-size:11px;color:var(--green);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:20px}
+.cell{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;border:2.5px solid transparent;transition:all .15s;cursor:pointer}
+.cell.sel{border-color:var(--green);box-shadow:0 0 0 2px rgba(74,140,92,0.25)}
+.cell.del-sel{border-color:#D94F3D;opacity:0.65}
+.cell img,.cell video{width:100%;height:100%;object-fit:cover;display:block}
+.cell-grad{position:absolute;bottom:0;left:0;right:0;padding:14px 6px 5px;background:linear-gradient(transparent,rgba(0,0,0,0.5))}
+.cell-time{font-size:9px;color:rgba(255,255,255,0.9);font-weight:700}
+.cell-dur{font-size:9px;color:rgba(255,255,255,0.7)}
+.play-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2)}
+.play-circle{width:28px;height:28px;border-radius:50%;background:rgba(74,140,92,0.8);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff}
+.sel-num{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700}
+.chk{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff}
+.chk.on{background:#D94F3D;border-color:#D94F3D}
+.edit-btn{position:absolute;top:5px;left:5px;background:rgba(0,0,0,0.6);border:none;border-radius:8px;padding:3px 7px;color:#fff;font-size:11px;font-weight:700;letter-spacing:1px}
+.ov-badge{position:absolute;top:5px;left:36px;background:rgba(74,140,92,0.85);border-radius:6px;padding:2px 6px;font-size:9px;color:#fff;font-weight:700}
+.cta-wrap{display:flex;flex-direction:column;gap:10px}
+.cta-green{background:var(--green);color:#fff;border:none;border-radius:14px;padding:14px;font-size:14px;font-weight:700;box-shadow:0 4px 14px rgba(74,140,92,0.3);width:100%}
+.cta-outline{background:#fff;color:var(--green);border:1.5px solid var(--green);border-radius:14px;padding:14px;font-size:14px;font-weight:700;width:100%}
+.hint-txt{text-align:center;font-size:12px;color:var(--textMute);padding:10px 0}
+.empty-state{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:60px;text-align:center}
+.empty-icon{width:64px;height:64px;border-radius:20px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:28px}
+/* Collage */
+#collage-view{padding:16px;overflow-y:auto}
+.ratio-row{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+.ratio-lbl{font-size:11px;color:var(--textSub);white-space:nowrap}
+.ratio-btn{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:7px 0;font-size:12px;color:var(--textSub);transition:all .15s}
+.ratio-btn.active{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+.layout-row{display:flex;gap:6px;margin-bottom:10px}
+.layout-btn{flex:1;background:var(--surface2);border:none;border-radius:8px;padding:7px 4px;font-size:10px;color:var(--textSub)}
+.layout-btn.active{background:var(--green);color:#fff;font-weight:700}
+.collage-canvas-wrap{border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(74,140,92,0.12)}
+#collage-canvas{width:100%;display:block;border-radius:14px}
+.save-share-bar{display:flex;gap:10px;margin-top:12px}
+.save-btn2{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:13px 0;font-size:13px;font-weight:600;color:var(--text)}
+.share-btn{flex:2;background:var(--green);border:none;border-radius:12px;padding:13px 0;font-size:14px;font-weight:700;color:#fff;box-shadow:0 4px 14px rgba(74,140,92,0.3)}
+/* Video collage */
+.vcollage-wrap{background:#0d0d0d;border-radius:18px;overflow:hidden;border:1px solid var(--border)}
+.vcollage-grid{display:grid;gap:3px;padding:3px}
+.vcell{position:relative;overflow:hidden;border-radius:8px;min-height:60px;transition:opacity .45s,transform .45s cubic-bezier(0.34,1.56,0.64,1)}
+.vcell.hidden{opacity:0;transform:scale(0.88)}
+.vcell video{width:100%;height:100%;object-fit:cover;display:block}
+.vcell-ts{position:absolute;top:50%;left:8px;transform:translateY(-50%);background:rgba(15,30,15,0.6);border-radius:5px;padding:2px 7px;font-size:24px;font-weight:700;color:rgba(250,252,248,0.95);pointer-events:none}
+.vcell-dur{position:absolute;top:5px;right:7px;font-size:9px;color:rgba(255,255,255,0.7);pointer-events:none}
+.vcell-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.25)}
+.vcell-play-btn{width:34px;height:34px;border-radius:50%;background:rgba(74,140,92,0.85);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff}
+.order-badge{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:50%;background:rgba(74,140,92,0.93);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;z-index:10;animation:popIn .4s cubic-bezier(0.34,1.56,0.64,1)}
+.vcollage-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#181818}
+.vcollage-date{font-size:10px;color:#aaa}
+.vcollage-badge{font-size:10px;color:var(--green);font-weight:700;background:rgba(74,140,92,0.15);border-radius:6px;padding:2px 7px}
+.vcollage-info{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.vcollage-info-txt{font-size:11px;color:var(--textSub)}
+.vcollage-hint{margin-top:12px;padding:10px 14px;background:var(--mint);border-radius:12px;font-size:11px;color:var(--greenDk);line-height:1.6}
+/* Text editor modal */
+#text-editor{position:fixed;inset:0;z-index:200;background:rgba(10,10,10,0.97);display:none;flex-direction:column;max-width:430px;margin:0 auto}
+#text-editor.open{display:flex}
+.ed-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid #222;flex-shrink:0}
+.ed-close{background:none;border:none;color:#888;font-size:22px;line-height:1}
+.ed-title{font-size:14px;font-weight:700;color:#fff}
+.ed-save{background:var(--green);color:#fff;border:none;border-radius:10px;padding:7px 16px;font-size:13px;font-weight:700}
+.ed-preview{position:relative;flex:1;background:#000;overflow:hidden}
+.ed-preview img,.ed-preview video{width:100%;height:100%;object-fit:contain;display:block}
+.ov-label{position:absolute;cursor:pointer;transform:translate(-50%,-50%);max-width:85%}
+.ov-label span{display:inline-block;font-weight:700;text-shadow:0 1px 8px rgba(0,0,0,0.8);border:1.5px dashed transparent;border-radius:6px;padding:2px 6px;text-align:center;line-height:1.3}
+.ov-label span.editing{border-color:var(--green)}
+.tap-hint{position:absolute;bottom:10px;left:0;right:0;text-align:center;pointer-events:none}
+.tap-hint span{font-size:11px;color:rgba(255,255,255,0.6);background:rgba(0,0,0,0.5);border-radius:20px;padding:4px 12px}
+.ed-controls{background:#111;border-top:1px solid #222;padding:12px 14px 20px;max-height:280px;overflow-y:auto;flex-shrink:0}
+.ov-list{margin-bottom:12px}
+.ov-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin-bottom:6px;border-radius:10px;background:#181818;border:1.5px solid #222;cursor:pointer}
+.ov-item.active{background:#1e1e1e;border-color:var(--green)}
+.ov-item-txt{font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov-item-btns{display:flex;gap:8px;margin-left:10px}
+.ov-item-btns button{background:none;border:none;font-size:14px;cursor:pointer}
+.add-txt-btn{width:100%;background:none;border:1.5px dashed rgba(74,140,92,0.3);border-radius:10px;padding:9px 0;color:var(--green);font-size:13px;font-weight:600;margin-bottom:14px}
+.ed-panel{background:#181818;border-radius:12px;padding:12px 14px}
+.panel-lbl{font-size:11px;color:#666;margin-bottom:6px;margin-top:10px}
+.panel-lbl:first-child{margin-top:0}
+.ed-textarea{width:100%;background:#222;border:1px solid #333;border-radius:8px;color:#fff;font-size:14px;padding:8px 10px;resize:none;outline:none;min-height:52px;box-sizing:border-box}
+.color-row{display:flex;gap:8px;flex-wrap:wrap}
+.color-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:border .12s;flex-shrink:0}
+.color-dot.active{border-color:var(--green)}
+.size-row{display:flex;gap:6px}
+.size-btn{flex:1;background:#222;color:#888;border:none;border-radius:8px;padding:6px 0;font-size:11px;cursor:pointer}
+.size-btn.active{background:var(--green);color:#fff;font-weight:700}
+.apply-btn{width:100%;margin-top:12px;background:var(--green);color:#fff;border:none;border-radius:10px;padding:10px 0;font-size:13px;font-weight:700}
+.empty-ov-hint{text-align:center;color:#555;font-size:12px;padding:10px 0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.25}}
+@keyframes popIn{0%{opacity:0;transform:translate(-50%,-50%) scale(0.4)}60%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="header">
+  <div class="logo-row">
+    <div class="logo-icon">🌿</div>
+    <div>
+      <div class="logo-name">foodi</div>
+      <div class="logo-sub">logram</div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="photo-count">0</div><div class="stat-lbl">사진</div></div>
+    <div class="stat-div"></div>
+    <div class="stat"><div class="stat-num" id="video-count">0</div><div class="stat-lbl">영상</div></div>
+  </div>
+</div>
+
+<!-- Date strip -->
+<div id="datestrip">
+  <span id="date-txt">🌿 로딩중...</span>
+  <span id="clock">00:00</span>
+</div>
+
+<!-- Content -->
+<div id="content">
+
+  <!-- Camera view -->
+  <div id="cam-view" style="display:flex;flex-direction:column;flex:1">
+    <div id="vf-wrap">
+      <video id="cam-video" autoplay playsinline muted></video>
+      <div id="cam-error">
+        <div class="cam-error-emoji" style="animation:bounce 1.6s ease-in-out infinite">🥗</div>
+        <div class="cam-error-title">카메라 권한이 필요해요</div>
+        <div class="cam-error-msg">카메라와 마이크 접근을 허용해주세요</div>
+        <button id="retry-btn" onclick="startCamera()">🔄 다시 시도</button>
+      </div>
+      <div id="flash"></div>
+      <div id="countdown-overlay"><div id="countdown-num"></div></div>
+      <div id="rec-badge"><div class="rec-dot"></div><span id="rec-txt">REC 00:00</span></div>
+      <div id="ts-pill"><span id="vf-time">00:00</span></div>
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+    </div>
+    <div class="mode-bar">
+      <button class="mode-btn active" id="mode-photo" onclick="setMode('photo')">📷 사진</button>
+      <button class="mode-btn" id="mode-video" onclick="setMode('video')">🎬 영상</button>
+    </div>
+    <div class="controls" id="cam-controls">
+      <div class="timer-row" id="timer-row-photo">
+        <span class="timer-lbl">⏱ 타이머</span>
+        <div class="timer-pills">
+          <button class="timer-pill active" onclick="setTimer(3)">3초</button>
+          <button class="timer-pill" onclick="setTimer(5)">5초</button>
+          <button class="timer-pill" onclick="setTimer(7)">7초</button>
+        </div>
+      </div>
+      <div class="timer-row" id="timer-row-video" style="display:none">
+        <span class="timer-lbl">⏱ 촬영 시간</span>
+        <div class="timer-pills">
+          <button class="timer-pill active" onclick="setTimer(3)">3초</button>
+          <button class="timer-pill" onclick="setTimer(5)">5초</button>
+          <button class="timer-pill" onclick="setTimer(7)">7초</button>
+        </div>
+      </div>
+      <button class="flip-btn" onclick="flipCamera()">⇄</button>
+    </div>
+    <div class="shutter-wrap">
+      <div style="position:relative;width:80px;height:80px">
+        <div class="shutter-ring" id="shutter-ring"></div>
+        <button class="shutter" id="shutter-btn" onclick="handleShutter()">
+          <div class="shutter-inner" id="shutter-inner"></div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gallery view -->
+  <div id="gallery-view" style="display:none">
+    <div class="toolbar">
+      <span class="toolbar-count" id="gallery-count">0개 항목</span>
+      <div id="del-toolbar-normal">
+        <button class="del-btn" onclick="enterDeleteMode()">🗑 선택 삭제</button>
+      </div>
+      <div id="del-toolbar-delete" style="display:none;gap:8px;display:none">
+        <button class="cancel-btn" onclick="exitDeleteMode()">취소</button>
+        <button class="confirm-del-btn" id="confirm-del-btn" onclick="confirmDelete()">삭제</button>
+      </div>
+    </div>
+    <div id="photos-section" style="margin-bottom:20px;display:none">
+      <div class="sec-head">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span>📷</span><span class="sec-title">사진</span><span id="photo-sec-count" style="font-size:11px;color:var(--textMute)"></span>
+        </div>
+        <span class="sec-badge" id="photo-sel-badge"></span>
+      </div>
+      <div class="grid" id="photos-grid"></div>
+    </div>
+    <div id="videos-section" style="margin-bottom:20px;display:none">
+      <div class="sec-head">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span>🎬</span><span class="sec-title">영상</span><span id="video-sec-count" style="font-size:11px;color:var(--textMute)"></span>
+        </div>
+        <span class="sec-badge" id="video-sel-badge"></span>
+      </div>
+      <div class="grid" id="videos-grid"></div>
+    </div>
+    <div id="gallery-cta" class="cta-wrap"></div>
+    <div id="gallery-empty" class="empty-state" style="display:none">
+      <div class="empty-icon">🌿</div>
+      <div style="font-size:15px;font-weight:600;color:var(--textSub)">오늘의 식단을 기록해보세요</div>
+      <div style="font-size:12px;color:var(--textMute)">사진이나 영상으로 먹은 음식을 찍어보세요</div>
+    </div>
+  </div>
+
+  <!-- Collage view -->
+  <div id="collage-view" style="display:none">
+    <div id="col-mode-bar" class="mode-bar" style="display:none">
+      <button class="mode-btn active" id="col-photo-btn" onclick="setCollageMode('photo')">📷 사진</button>
+      <button class="mode-btn" id="col-video-btn" onclick="setCollageMode('video')">🎬 영상</button>
+    </div>
+    <div id="col-photo-section">
+      <div class="ratio-row">
+        <span class="ratio-lbl">비율</span>
+        <button class="ratio-btn active" onclick="setRatio('1:1')">■ 1:1</button>
+        <button class="ratio-btn" onclick="setRatio('3:4')">▬ 3:4</button>
+      </div>
+      <div class="layout-row">
+        <button class="layout-btn active" onclick="setLayout('grid2x2')">2×2</button>
+        <button class="layout-btn" onclick="setLayout('grid2x3')">2×3</button>
+        <button class="layout-btn" onclick="setLayout('strip')">스트립</button>
+        <button class="layout-btn" onclick="setLayout('feature')">메인+서브</button>
+      </div>
+      <div style="font-size:11px;color:var(--textMute);margin-bottom:10px" id="col-photo-info"></div>
+      <div class="collage-canvas-wrap">
+        <canvas id="collage-canvas"></canvas>
+      </div>
+      <div class="save-share-bar">
+        <button class="save-btn2" onclick="saveCollage()">💾 저장</button>
+        <button class="share-btn" onclick="shareCollage()">🔗 공유하기</button>
+      </div>
+    </div>
+    <div id="col-video-section" style="display:none">
+      <div class="vcollage-info">
+        <span class="vcollage-info-txt" id="vcol-info-txt"></span>
+        <span class="vcollage-badge" id="vcol-layout-badge"></span>
+      </div>
+      <div class="vcollage-wrap">
+        <div class="vcollage-grid" id="vcollage-grid"></div>
+        <div class="vcollage-bar">
+          <span class="vcollage-date" id="vcol-date"></span>
+          <span class="vcollage-badge" id="vcol-clips"></span>
+        </div>
+      </div>
+      <div class="vcollage-hint">🌿 클립 수에 따라 레이아웃이 자동 적용됩니다 · 탭하면 재생/정지</div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- Nav -->
+<div id="nav">
+  <button class="nav-btn" onclick="switchView('camera')">
+    <div class="nav-icon active" id="nav-camera">📷</div>
+    <span class="nav-lbl active" id="navlbl-camera">촬영</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('gallery')">
+    <div class="nav-icon" id="nav-gallery">🥗</div>
+    <span class="nav-lbl" id="navlbl-gallery">갤러리</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('collage')">
+    <div class="nav-icon" id="nav-collage">🌿</div>
+    <span class="nav-lbl" id="navlbl-collage">콜라주</span>
+  </button>
+</div>
+
+<!-- Text Editor Modal -->
+<div id="text-editor">
+  <div class="ed-header">
+    <button class="ed-close" onclick="closeEditor()">✕</button>
+    <span class="ed-title" id="ed-title">텍스트 편집</span>
+    <button class="ed-save" onclick="saveEditor()">저장</button>
+  </div>
+  <div class="ed-preview" id="ed-preview" onclick="handleEditorTap(event)">
+    <div id="ed-media-wrap"></div>
+    <div id="ed-overlays"></div>
+    <div class="tap-hint" id="tap-hint" style="display:none"><span>화면을 탭해서 위치 이동</span></div>
+  </div>
+  <div class="ed-controls">
+    <div class="ov-list" id="ov-list"></div>
+    <button class="add-txt-btn" onclick="addOverlay()">＋ 텍스트 추가</button>
+    <div id="ed-panel" style="display:none" class="ed-panel">
+      <div class="panel-lbl">텍스트 내용</div>
+      <textarea class="ed-textarea" id="ed-textarea" rows="2"></textarea>
+      <div class="panel-lbl">색상</div>
+      <div class="color-row" id="color-row"></div>
+      <div class="panel-lbl">크기</div>
+      <div class="size-row" id="size-row"></div>
+      <button class="apply-btn" onclick="applyEdit()">✓ 적용</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────
+const state = {
+  photos: [], videos: [],
+  captureMode: 'photo', facingMode: 'environment',
+  timerSec: 3, countdown: null, recording: false, recDur: 0,
+  recTimer: null, stream: null, recorder: null, chunks: [],
+  selPhotos: [], selVideos: [],
+  deleteMode: false, delPhotos: [], delVideos: [],
+  collageMode: 'photo', photoLayout: 'grid2x2', photoRatio: '1:1',
+  colPhotoIdx: null, colVideoIdx: null,
+  editingType: null, editingIdx: null,
+  edOverlays: [], editingOvId: null,
+  edDraft: {text:'',x:50,y:50,color:'#ffffff',size:18},
+  vcRevealTimer: null, vcRevealed: [], vcAllRevealed: false,
+};
+
+const T = {green:'#4A8C5C',greenDk:'#2F6640',white:'#FFFFFF',text:'#1E2D1F',textMute:'#9EB89F'};
+const TEXT_COLORS = ['#ffffff','#FFE066','#7DFFB3','#FF7D7D','#7DB8FF','#FFAF7D','#E8D5FF'];
+const TEXT_SIZES  = [11,14,18,24,30];
+
+// ── Helpers ───────────────────────────────────────────────────
+const fmtTime = d => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+const fmtDate = d => `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+const fmtDateKo = d => ['일','월','화','수','목','금','토'][d.getDay()]+'요일';
+const fmtDur = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const $ = id => document.getElementById(id);
+
+// ── Clock ─────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  $('clock').textContent = fmtTime(now);
+  $('vf-time').textContent = fmtTime(now);
+  $('date-txt').textContent = `🌿 ${fmtDate(now)} ${fmtDateKo(now)}`;
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ── Nav ───────────────────────────────────────────────────────
+function switchView(v) {
+  ['camera','gallery','collage'].forEach(k => {
+    $(`cam-view`).style.display = k==='camera' ? '' : 'none';
+    const el = $(k+'-view'); if(el) el.style.display = 'none';
+    $('nav-'+k).classList.remove('active');
+    $('navlbl-'+k).classList.remove('active');
+  });
+  if(v==='camera') $('cam-view').style.display='flex';
+  else { const el=$(v+'-view'); if(el) el.style.display=''; }
+  $('nav-'+v).classList.add('active');
+  $('navlbl-'+v).classList.add('active');
+  if(v==='gallery') renderGallery();
+  if(v==='collage') renderCollage();
+  if(v==='camera') startCamera();
+}
+
+// ── Camera ────────────────────────────────────────────────────
+async function startCamera() {
+  try {
+    if(state.stream) state.stream.getTracks().forEach(t=>t.stop());
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:state.facingMode,width:{ideal:1280},height:{ideal:720}}, audio:true
+    });
+    state.stream = stream;
+    const vid = $('cam-video');
+    vid.srcObject = stream; vid.style.display='block';
+    $('cam-error').style.display='none';
+    await vid.play();
+  } catch(e) {
+    $('cam-video').style.display='none';
+    $('cam-error').style.display='flex';
+  }
+}
+
+function flipCamera() {
+  state.facingMode = state.facingMode==='user'?'environment':'user';
+  startCamera();
+}
+
+function setMode(m) {
+  if(state.recording) return;
+  state.captureMode = m;
+  $('mode-photo').classList.toggle('active', m==='photo');
+  $('mode-video').classList.toggle('active', m==='video');
+  $('timer-row-photo').style.display = m==='photo'?'flex':'none';
+  $('timer-row-video').style.display = m==='video'?'flex':'none';
+  const btn=$('shutter-btn'), inner=$('shutter-inner');
+  btn.classList.toggle('rec-mode', m==='video');
+  inner.className='shutter-inner'+(m==='video'?' vid':'');
+}
+
+function setTimer(s) {
+  state.timerSec = s;
+  document.querySelectorAll('.timer-pill').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.timer-pill').forEach(b=>{ if(b.textContent===s+'초') b.classList.add('active'); });
+}
+
+function handleShutter() {
+  if(state.captureMode==='video') { state.recording ? stopRecording() : startRecording(); return; }
+  let c = state.timerSec;
+  $('countdown-overlay').style.display='flex';
+  $('countdown-num').textContent = c;
+  state.countdown = setInterval(()=>{
+    c--;
+    if(c<=0){ clearInterval(state.countdown); $('countdown-overlay').style.display='none'; takePhoto(); }
+    else $('countdown-num').textContent = c;
+  },1000);
+}
+
+function takePhoto() {
+  const vid = $('cam-video');
+  const c = document.createElement('canvas');
+  c.width=vid.videoWidth||640; c.height=vid.videoHeight||480;
+  const ctx=c.getContext('2d');
+  if(state.facingMode==='user'){ctx.save();ctx.translate(c.width,0);ctx.scale(-1,1);}
+  ctx.drawImage(vid,0,0);
+  if(state.facingMode==='user') ctx.restore();
+  const ts=Date.now();
+  state.photos.unshift({src:c.toDataURL('image/jpeg',0.92),ts,overlays:[]});
+  updateStats();
+  // flash
+  const fl=$('flash'); fl.style.opacity='0.75';
+  setTimeout(()=>fl.style.opacity='0',160);
+}
+
+async function startRecording() {
+  if(!state.stream) return;
+  state.chunks=[];
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+  state.recorder=new MediaRecorder(state.stream,{mimeType:mime});
+  state.recorder.ondataavailable=e=>{if(e.data.size>0)state.chunks.push(e.data);};
+  state.recorder.onstop=async()=>{
+    const blob=new Blob(state.chunks,{type:mime});
+    const thumb=await extractThumb(blob);
+    state.videos.unshift({blob,thumb,ts:Date.now(),duration:state.recDur,overlays:[]});
+    state.recDur=0; updateStats();
+    $('rec-badge').style.display='none';
+    $('shutter-btn').classList.remove('rec-mode');
+    $('shutter-inner').className='shutter-inner vid';
+  };
+  state.recorder.start(100);
+  state.recording=true;
+  $('rec-badge').style.display='flex';
+  $('shutter-btn').classList.add('rec-mode');
+  $('shutter-inner').className='shutter-inner stop';
+  let sec=0;
+  state.recTimer=setInterval(()=>{
+    sec++; state.recDur=sec;
+    $('rec-txt').textContent=`REC ${fmtDur(sec)}`;
+    if(sec>=state.timerSec) stopRecording();
+  },1000);
+}
+
+function stopRecording() {
+  if(state.recorder&&state.recording){
+    clearInterval(state.recTimer);
+    state.recorder.stop();
+    state.recording=false;
+  }
+}
+
+async function extractThumb(blob) {
+  return new Promise(res=>{
+    const url=URL.createObjectURL(blob);
+    const v=document.createElement('video');
+    v.muted=true; v.src=url; v.currentTime=0.1;
+    v.onloadeddata=()=>{
+      const c=document.createElement('canvas');
+      c.width=v.videoWidth||320; c.height=v.videoHeight||240;
+      c.getContext('2d').drawImage(v,0,0);
+      res(c.toDataURL('image/jpeg',0.8));
+      URL.revokeObjectURL(url);
+    };
+    v.onerror=()=>{res(null);URL.revokeObjectURL(url);};
+    v.load();
+  });
+}
+
+startCamera();
+
+// ── Stats ─────────────────────────────────────────────────────
+function updateStats() {
+  $('photo-count').textContent=state.photos.length;
+  $('video-count').textContent=state.videos.length;
+}
+
+// ── Gallery ───────────────────────────────────────────────────
+function renderGallery() {
+  const total=state.photos.length+state.videos.length;
+  $('gallery-count').textContent=total+'개 항목';
+  $('gallery-empty').style.display=total===0?'flex':'none';
+  $('photos-section').style.display=state.photos.length?'':'none';
+  $('videos-section').style.display=state.videos.length?'':'none';
+
+  // Photos grid
+  $('photo-sec-count').textContent=`(${state.photos.length})`;
+  $('photos-grid').innerHTML='';
+  state.photos.forEach((p,i)=>{
+    const isDel=state.delPhotos.includes(i), isSel=state.selPhotos.includes(i);
+    const cell=document.createElement('div');
+    cell.className='cell'+(state.deleteMode?(isDel?' del-sel':''):(isSel?' sel':''));
+    cell.innerHTML=`<img src="${p.src}" style="width:100%;height:100%;object-fit:cover">
+      ${state.deleteMode?`<div class="chk${isDel?' on':''}">${isDel?'✕':''}</div>`:''}
+      ${!state.deleteMode&&isSel?`<div class="sel-num">${state.selPhotos.indexOf(i)+1}</div>`:''}
+      ${!state.deleteMode?`<button class="edit-btn" onclick="event.stopPropagation();openEditor('photo',${i})">···</button>`:''}
+      ${!state.deleteMode&&p.overlays&&p.overlays.length>0?`<div class="ov-badge">T×${p.overlays.length}</div>`:''}
+      <div class="cell-grad"><span class="cell-time">${fmtTime(new Date(p.ts))}</span></div>`;
+    cell.onclick=()=>{
+      if(state.deleteMode){ toggleDel('photo',i); }
+      else { toggleSel('photo',i); }
+      renderGallery();
+    };
+    $('photos-grid').appendChild(cell);
+  });
+
+  // Videos grid
+  $('video-sec-count').textContent=`(${state.videos.length})`;
+  $('videos-grid').innerHTML='';
+  state.videos.forEach((v,i)=>{
+    const isDel=state.delVideos.includes(i), isSel=state.selVideos.includes(i);
+    const cell=document.createElement('div');
+    cell.className='cell'+(state.deleteMode?(isDel?' del-sel':''):(isSel?' sel':''));
+    cell.innerHTML=`${v.thumb?`<img src="${v.thumb}" style="width:100%;height:100%;object-fit:cover">`:`<div style="width:100%;height:100%;background:#1a1a1a"></div>`}
+      <div class="play-icon"><div class="play-circle">▶</div></div>
+      ${state.deleteMode?`<div class="chk${isDel?' on':''}">${isDel?'✕':''}</div>`:''}
+      ${!state.deleteMode&&isSel?`<div class="sel-num">${state.selVideos.indexOf(i)+1}</div>`:''}
+      ${!state.deleteMode?`<button class="edit-btn" onclick="event.stopPropagation();openEditor('video',${i})">···</button>`:''}
+      ${!state.deleteMode&&v.overlays&&v.overlays.length>0?`<div class="ov-badge">T×${v.overlays.length}</div>`:''}
+      <div class="cell-grad" style="display:flex;justify-content:space-between">
+        <span class="cell-time">${fmtTime(new Date(v.ts))}</span>
+        <span class="cell-dur">${fmtDur(v.duration||0)}</span>
+      </div>`;
+    cell.onclick=()=>{
+      if(state.deleteMode){ toggleDel('video',i); }
+      else { toggleSel('video',i); }
+      renderGallery();
+    };
+    $('videos-grid').appendChild(cell);
+  });
+
+  // badges
+  const delCount=state.delPhotos.length+state.delVideos.length;
+  $('photo-sel-badge').textContent=state.deleteMode?(state.delPhotos.length?state.delPhotos.length+'장 선택됨':''):(state.selPhotos.length?state.selPhotos.length+'장 선택됨':'');
+  $('video-sel-badge').textContent=state.deleteMode?(state.delVideos.length?state.delVideos.length+'개 선택됨':''):(state.selVideos.length?state.selVideos.length+'개 선택됨':'');
+  $('confirm-del-btn').textContent=`삭제${delCount?` (${delCount})`:''}`;
+  $('confirm-del-btn').disabled=delCount===0;
+
+  // delete toolbar toggle
+  $('del-toolbar-normal').style.display=state.deleteMode?'none':'block';
+  $('del-toolbar-delete').style.display=state.deleteMode?'flex':'none';
+
+  // CTA
+  $('gallery-cta').innerHTML='';
+  if(!state.deleteMode){
+    if(state.selPhotos.length>=2){
+      const b=document.createElement('button');
+      b.className='cta-green'; b.textContent=`📷 사진 ${state.selPhotos.length}장으로 콜라주 만들기 →`;
+      b.onclick=()=>{ state.colPhotoIdx=[...state.selPhotos]; state.colVideoIdx=null; state.collageMode='photo'; switchView('collage'); };
+      $('gallery-cta').appendChild(b);
     }
-  </script>
-  </body>
+    if(state.selVideos.length>=1){
+      const b=document.createElement('button');
+      b.className='cta-outline'; b.style.marginTop='10px'; b.textContent=`🎬 영상 ${state.selVideos.length}개로 콜라주 만들기 →`;
+      b.onclick=()=>{ state.colVideoIdx=[...state.selVideos]; state.colPhotoIdx=null; state.collageMode='video'; switchView('collage'); };
+      $('gallery-cta').appendChild(b);
+    }
+    if(state.selPhotos.length<2&&state.selVideos.length<1&&total>0){
+      const p=document.createElement('p'); p.className='hint-txt';
+      p.textContent='사진 2장 이상 또는 영상 1개 이상 선택하면 콜라주를 만들 수 있어요';
+      $('gallery-cta').appendChild(p);
+    }
+  }
+}
+
+function toggleSel(type,i){
+  const arr=type==='photo'?state.selPhotos:state.selVideos;
+  const idx=arr.indexOf(i);
+  if(idx>=0) arr.splice(idx,1); else arr.push(i);
+}
+function toggleDel(type,i){
+  const arr=type==='photo'?state.delPhotos:state.delVideos;
+  const idx=arr.indexOf(i);
+  if(idx>=0) arr.splice(idx,1); else arr.push(i);
+}
+function enterDeleteMode(){ state.deleteMode=true; renderGallery(); }
+function exitDeleteMode(){ state.deleteMode=false; state.delPhotos=[]; state.delVideos=[]; renderGallery(); }
+function confirmDelete(){
+  [...state.delPhotos].sort((a,b)=>b-a).forEach(i=>state.photos.splice(i,1));
+  [...state.delVideos].sort((a,b)=>b-a).forEach(i=>state.videos.splice(i,1));
+  state.selPhotos=[]; state.selVideos=[];
+  exitDeleteMode(); updateStats();
+}
+
+// ── Collage ───────────────────────────────────────────────────
+function setCollageMode(m){
+  state.collageMode=m;
+  $('col-photo-btn').classList.toggle('active',m==='photo');
+  $('col-video-btn').classList.toggle('active',m==='video');
+  $('col-photo-section').style.display=m==='photo'?'':'none';
+  $('col-video-section').style.display=m==='video'?'':'none';
+  if(m==='photo') drawPhotoCollage();
+  if(m==='video') renderVideoCollage();
+}
+
+function setRatio(r){
+  state.photoRatio=r;
+  document.querySelectorAll('.ratio-btn').forEach(b=>b.classList.toggle('active',b.textContent.includes(r.replace(':',''))||b.textContent===`▬ ${r}`||b.textContent===`■ ${r}`));
+  drawPhotoCollage();
+}
+function setLayout(l){
+  state.photoLayout=l;
+  document.querySelectorAll('.layout-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  drawPhotoCollage();
+}
+
+function renderCollage(){
+  const hasP=state.photos.length>0, hasV=state.videos.length>0;
+  $('col-mode-bar').style.display=(hasP&&hasV)?'flex':'none';
+  if(!hasP&&hasV) state.collageMode='video';
+  if(!hasV&&hasP) state.collageMode='photo';
+  $('col-photo-btn').classList.toggle('active',state.collageMode==='photo');
+  $('col-video-btn').classList.toggle('active',state.collageMode==='video');
+  $('col-photo-section').style.display=state.collageMode==='photo'?'':'none';
+  $('col-video-section').style.display=state.collageMode==='video'?'':'none';
+  if(state.collageMode==='photo') drawPhotoCollage();
+  else renderVideoCollage();
+}
+
+function getColPhotos(){
+  if(state.colPhotoIdx&&state.colPhotoIdx.length) return state.colPhotoIdx.map(i=>state.photos[i]).filter(Boolean);
+  const max={grid2x2:4,grid2x3:6,strip:6,feature:6}[state.photoLayout]||4;
+  return state.photos.slice(0,max);
+}
+
+function drawPhotoCollage(){
+  const photos=getColPhotos();
+  if(photos.length<2){
+    const c=$('collage-canvas'); c.width=400; c.height=400;
+    const ctx=c.getContext('2d'); ctx.fillStyle='#EFF4EB'; ctx.fillRect(0,0,400,400);
+    ctx.fillStyle='#6B8A6D'; ctx.font='14px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('사진을 2장 이상 선택해주세요',200,200);
+    return;
+  }
+  const W=1080, H=state.photoRatio==='3:4'?1350:1080;
+  const c=$('collage-canvas'); c.width=W; c.height=H;
+  const ctx=c.getContext('2d');
+  const gap=6,pad=14,barH=32;
+  const innerW=W-pad*2, innerH=H-pad*2-barH-4;
+  ctx.fillStyle='#FAFCF8'; ctx.fillRect(0,0,W,H);
+
+  const drawImg=(src,x,y,w,h)=>new Promise(res=>{
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>{
+      ctx.save(); ctx.beginPath(); ctx.roundRect(x,y,w,h,8); ctx.clip();
+      const s=Math.max(w/img.width,h/img.height);
+      ctx.drawImage(img,x+(w-img.width*s)/2,y+(h-img.height*s)/2,img.width*s,img.height*s);
+      ctx.restore(); res();
+    };
+    img.onerror=res; img.src=src;
+  });
+
+  const stampOver=(text,x,y,w,h)=>{
+    const size=30; ctx.save();
+    ctx.font=`bold ${size}px 'Helvetica Neue',sans-serif`;
+    const tw=ctx.measureText(text).width;
+    const px=x+10,py=y+h/2;
+    ctx.fillStyle='rgba(20,38,22,0.68)';
+    ctx.beginPath(); ctx.roundRect(px,py-size*0.75,tw+18,size+8,6); ctx.fill();
+    ctx.fillStyle='rgba(250,252,248,0.96)'; ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText(text,px+9,py+2); ctx.restore();
+  };
+
+  const drawBar=()=>{
+    const barY=H-pad-barH;
+    ctx.fillStyle=T.green;
+    ctx.beginPath(); ctx.roundRect(pad,barY,innerW,barH,4); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font=`12px sans-serif`; ctx.textAlign='left'; ctx.textBaseline='middle';
+    const d=new Date(photos[0].ts);
+    ctx.fillText(`${fmtDate(d)}  ${fmtDateKo(d)}`,pad+10,barY+barH/2);
+    ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.textAlign='right';
+    ctx.fillText(`🌿 foodi logram · ${photos.length} shots`,W-pad-10,barY+barH/2);
+  };
+
+  const render=async()=>{
+    const layout=state.photoLayout;
+    const sliced=photos.slice(0,{grid2x2:4,grid2x3:6,strip:6,feature:6}[layout]);
+    if(layout==='grid2x2'){
+      const cw=(innerW-gap)/2,ch=(innerH-gap)/2;
+      await Promise.all(sliced.map((p,i)=>{
+        const x=pad+(i%2)*(cw+gap),y=pad+Math.floor(i/2)*(ch+gap);
+        return drawImg(p.src,x,y,cw,ch).then(()=>stampOver(fmtTime(new Date(p.ts)),x,y,cw,ch));
+      }));
+    } else if(layout==='grid2x3'){
+      const cw=(innerW-gap)/2,ch=(innerH-gap*2)/3;
+      await Promise.all(sliced.map((p,i)=>{
+        const x=pad+(i%2)*(cw+gap),y=pad+Math.floor(i/2)*(ch+gap);
+        return drawImg(p.src,x,y,cw,ch).then(()=>stampOver(fmtTime(new Date(p.ts)),x,y,cw,ch));
+      }));
+    } else if(layout==='strip'){
+      const n=sliced.length,cw=(innerW-gap*(n-1))/n;
+      await Promise.all(sliced.map((p,i)=>{
+        const x=pad+i*(cw+gap);
+        return drawImg(p.src,x,pad,cw,innerH).then(()=>stampOver(fmtTime(new Date(p.ts)),x,pad,cw,innerH));
+      }));
+    } else {
+      const mainW=innerW*0.58,subW=innerW-mainW-gap,rest=sliced.slice(1);
+      const subH=(innerH-gap*(rest.length-1))/rest.length;
+      await drawImg(sliced[0].src,pad,pad,mainW,innerH);
+      stampOver(fmtTime(new Date(sliced[0].ts)),pad,pad,mainW,innerH);
+      await Promise.all(rest.map((p,i)=>{
+        const x=pad+mainW+gap,y=pad+i*(subH+gap);
+        return drawImg(p.src,x,y,subW,subH).then(()=>stampOver(fmtTime(new Date(p.ts)),x,y,subW,subH));
+      }));
+    }
+    drawBar();
+  };
+  render();
+  const info=getColPhotos().length;
+  $('col-photo-info').textContent=`${info}장 선택 · ${state.photoRatio}`;
+}
+
+async function saveCollage(){
+  const c=$('collage-canvas');
+  const a=document.createElement('a');
+  a.download=`foodilogram_${Date.now()}.jpg`;
+  a.href=c.toDataURL('image/jpeg',0.95);
+  a.click();
+}
+
+async function shareCollage(){
+  const c=$('collage-canvas');
+  const dataUrl=c.toDataURL('image/jpeg',0.95);
+  const blob=await fetch(dataUrl).then(r=>r.blob());
+  const file=new File([blob],`foodilogram_${Date.now()}.jpg`,{type:'image/jpeg'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],title:'foodi logram',text:'오늘의 식단 기록 🌿'}); return; }
+    catch(e){ if(e.name==='AbortError') return; }
+  }
+  saveCollage();
+}
+
+// ── Video Collage ─────────────────────────────────────────────
+function getColVideos(){
+  if(state.colVideoIdx&&state.colVideoIdx.length) return state.colVideoIdx.map(i=>state.videos[i]).filter(Boolean);
+  return state.videos.slice(0,6);
+}
+
+function getVLayout(n){
+  if(n<=1) return {cols:1,rows:1,tpl:'1fr','rowTpl':'1fr'};
+  if(n===2) return {cols:1,rows:2,tpl:'1fr',rowTpl:'1fr 1fr'};
+  if(n===3) return {cols:1,rows:3,tpl:'1fr',rowTpl:'1fr 1fr 1fr'};
+  if(n===4) return {cols:1,rows:4,tpl:'1fr',rowTpl:'repeat(4,1fr)'};
+  if(n===5) return {cols:1,rows:5,tpl:'1fr',rowTpl:'repeat(5,1fr)'};
+  return {cols:2,rows:3,tpl:'1fr 1fr',rowTpl:'repeat(3,1fr)'};
+}
+
+function renderVideoCollage(){
+  const videos=getColVideos();
+  const n=Math.min(videos.length,6);
+  const lbl=n===1?'1×1':n===2?'1×2':n===3?'1×3':n===4?'1×4':n===5?'1×5':'2×3';
+  $('vcol-info-txt').textContent=`${n}개 클립 · 탭하면 재생/정지`;
+  $('vcol-layout-badge').textContent=`${lbl} · 9:16`;
+  if(videos.length>0){
+    const d=new Date(videos[0].ts);
+    $('vcol-date').textContent=`${fmtDate(d)} ${fmtDateKo(d)}`;
+    $('vcol-clips').textContent=`${n} clips`;
+  }
+  const {tpl,rowTpl}=getVLayout(n);
+  const grid=$('vcollage-grid');
+  grid.style.gridTemplateColumns=tpl;
+  grid.style.gridTemplateRows=rowTpl;
+  grid.style.aspectRatio=`9/${16*n/Math.min(n,2>n?1:n<=5?1:2)*Math.max(1,n<=5?n:3/2)}`;
+  // simpler: set explicit height via paddingBottom
+  const aspect=n<=5?`${n*16*100/9}%`:`${3*16*100/(9*2)}%`;
+  grid.style.position='relative';
+  const wrapper=grid.parentElement;
+  wrapper.style.position='relative';
+
+  // clear old cells
+  grid.innerHTML='';
+  if(state.vcRevealTimer) clearInterval(state.vcRevealTimer);
+  state.vcRevealed=[]; state.vcAllRevealed=false;
+
+  const cells=[];
+  videos.slice(0,n).forEach((v,i)=>{
+    const url=URL.createObjectURL(v.blob);
+    const cell=document.createElement('div');
+    cell.className='vcell hidden';
+    let playing=false;
+    cell.innerHTML=`
+      <video src="${url}" loop muted playsinline style="width:100%;height:100%;object-fit:cover;display:block"></video>
+      ${v.overlays&&v.overlays.length?v.overlays.map(ov=>`<span style="position:absolute;left:${ov.x}%;top:${ov.y}%;transform:translate(-50%,-50%);font-size:${ov.size||18}px;font-weight:700;color:${ov.color||'#fff'};text-shadow:0 1px 6px rgba(0,0,0,0.7);pointer-events:none">${ov.text}</span>`).join(''):''}
+      <div class="vcell-ts">${fmtTime(new Date(v.ts))}</div>
+      <div class="vcell-dur">${fmtDur(v.duration||0)}</div>
+      <div class="vcell-play"><div class="vcell-play-btn">▶</div></div>`;
+    cell.onclick=()=>{
+      const vid=cell.querySelector('video');
+      const overlay=cell.querySelector('.vcell-play');
+      playing=!playing;
+      playing?vid.play():vid.pause();
+      overlay.style.display=playing?'none':'flex';
+    };
+    grid.appendChild(cell);
+    cells.push(cell);
+  });
+
+  // reveal one by one
+  let i=0;
+  state.vcRevealTimer=setInterval(()=>{
+    if(i<cells.length){
+      cells[i].classList.remove('hidden');
+      // order badge
+      const badge=document.createElement('div');
+      badge.className='order-badge'; badge.textContent=i+1;
+      cells[i].appendChild(badge);
+      setTimeout(()=>badge.remove(),900);
+      i++;
+    } else {
+      clearInterval(state.vcRevealTimer);
+      state.vcAllRevealed=true;
+    }
+  },1000);
+}
+
+// ── Text Editor ───────────────────────────────────────────────
+function openEditor(type,idx){
+  state.editingType=type; state.editingIdx=idx;
+  const item=type==='photo'?state.photos[idx]:state.videos[idx];
+  state.edOverlays=item.overlays?[...item.overlays.map(o=>({...o}))]:[];
+  state.editingOvId=null;
+  $('ed-title').textContent=type==='photo'?'📷 텍스트 편집':'🎬 텍스트 편집';
+
+  // Media
+  const wrap=$('ed-media-wrap');
+  wrap.innerHTML='';
+  wrap.style.cssText='position:absolute;inset:0';
+  if(type==='photo'){
+    const img=document.createElement('img');
+    img.src=item.src; img.style.cssText='width:100%;height:100%;object-fit:contain;display:block';
+    wrap.appendChild(img);
+  } else {
+    const url=URL.createObjectURL(item.blob);
+    const vid=document.createElement('video');
+    vid.src=url; vid.autoplay=true; vid.loop=true; vid.muted=true; vid.playsInline=true;
+    vid.style.cssText='width:100%;height:100%;object-fit:contain;display:block';
+    wrap.appendChild(vid);
+  }
+  renderEdOverlays();
+  renderOvList();
+  $('ed-panel').style.display='none';
+  $('text-editor').classList.add('open');
+}
+
+function closeEditor(){ $('text-editor').classList.remove('open'); }
+
+function saveEditor(){
+  if(state.editingType==='photo'){
+    state.photos[state.editingIdx].overlays=[...state.edOverlays];
+    // bake overlays into photo
+    bakePhotoOverlays(state.editingIdx);
+  } else {
+    state.videos[state.editingIdx].overlays=[...state.edOverlays];
+  }
+  closeEditor(); renderGallery();
+}
+
+async function bakePhotoOverlays(idx){
+  const p=state.photos[idx];
+  if(!p.overlays||!p.overlays.length) return;
+  const img=new Image(); img.src=p.src;
+  await new Promise(res=>img.onload=res);
+  const c=document.createElement('canvas');
+  c.width=img.width; c.height=img.height;
+  const ctx=c.getContext('2d');
+  ctx.drawImage(img,0,0);
+  p.overlays.forEach(ov=>{
+    ctx.font=`bold ${ov.size||18}px 'Helvetica Neue',sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='rgba(0,0,0,0.65)'; ctx.shadowBlur=10;
+    ctx.fillStyle=ov.color||'#fff';
+    ctx.fillText(ov.text||'',(ov.x/100)*c.width,(ov.y/100)*c.height);
+    ctx.shadowBlur=0;
+  });
+  p.src=c.toDataURL('image/jpeg',0.95);
+}
+
+function renderEdOverlays(){
+  const wrap=$('ed-overlays');
+  wrap.innerHTML='';
+  wrap.style.cssText='position:absolute;inset:0;pointer-events:none';
+  state.edOverlays.forEach(ov=>{
+    const el=document.createElement('div');
+    el.className='ov-label'; el.style.left=ov.x+'%'; el.style.top=ov.y+'%';
+    el.style.pointerEvents='auto';
+    const sp=document.createElement('span');
+    sp.textContent=ov.text; sp.style.fontSize=(ov.size||18)+'px'; sp.style.color=ov.color||'#fff';
+    if(state.editingOvId===ov.id) sp.classList.add('editing');
+    el.appendChild(sp);
+    el.onclick=(e)=>{ e.stopPropagation(); startEditOv(ov.id); };
+    wrap.appendChild(el);
+  });
+  $('tap-hint').style.display=state.editingOvId?'block':'none';
+}
+
+function renderOvList(){
+  const list=$('ov-list');
+  list.innerHTML='';
+  if(!state.edOverlays.length){
+    list.innerHTML='<div class="empty-ov-hint">아래 + 버튼으로 텍스트를 추가해보세요</div>';
+    return;
+  }
+  state.edOverlays.forEach(ov=>{
+    const item=document.createElement('div');
+    item.className='ov-item'+(state.editingOvId===ov.id?' active':'');
+    item.innerHTML=`<span class="ov-item-txt" style="color:${ov.color||'#fff'}">${ov.text||'(빈 텍스트)'}</span>
+      <div class="ov-item-btns">
+        <button onclick="startEditOv(${ov.id})">✏️</button>
+        <button onclick="deleteOv(${ov.id})">🗑</button>
+      </div>`;
+    item.onclick=()=>startEditOv(ov.id);
+    list.appendChild(item);
+  });
+}
+
+function addOverlay(){
+  const ov={id:Date.now(),text:'텍스트 입력',x:50,y:50,color:'#ffffff',size:18};
+  state.edOverlays.push(ov);
+  startEditOv(ov.id);
+}
+
+function startEditOv(id){
+  state.editingOvId=id;
+  const ov=state.edOverlays.find(o=>o.id===id);
+  if(!ov) return;
+  state.edDraft={...ov};
+  $('ed-textarea').value=ov.text;
+  $('ed-panel').style.display='block';
+  renderColorRow(); renderSizeRow();
+  renderEdOverlays(); renderOvList();
+}
+
+function deleteOv(id){
+  state.edOverlays=state.edOverlays.filter(o=>o.id!==id);
+  if(state.editingOvId===id){ state.editingOvId=null; $('ed-panel').style.display='none'; }
+  renderEdOverlays(); renderOvList();
+}
+
+function applyEdit(){
+  state.edOverlays=state.edOverlays.map(o=>o.id===state.editingOvId?{...o,...state.edDraft}:o);
+  renderEdOverlays(); renderOvList();
+}
+
+$('ed-textarea').oninput=e=>{
+  state.edDraft.text=e.target.value;
+  state.edOverlays=state.edOverlays.map(o=>o.id===state.editingOvId?{...o,text:e.target.value}:o);
+  renderEdOverlays();
+};
+
+function handleEditorTap(e){
+  if(!state.editingOvId) return;
+  const rect=$('ed-preview').getBoundingClientRect();
+  const x=((e.clientX-rect.left)/rect.width)*100;
+  const y=((e.clientY-rect.top)/rect.height)*100;
+  state.edDraft.x=x; state.edDraft.y=y;
+  state.edOverlays=state.edOverlays.map(o=>o.id===state.editingOvId?{...o,x,y}:o);
+  renderEdOverlays();
+}
+
+function renderColorRow(){
+  $('color-row').innerHTML='';
+  TEXT_COLORS.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='color-dot'+(state.edDraft.color===c?' active':'');
+    d.style.background=c;
+    d.onclick=()=>{
+      state.edDraft.color=c;
+      state.edOverlays=state.edOverlays.map(o=>o.id===state.editingOvId?{...o,color:c}:o);
+      renderColorRow(); renderEdOverlays();
+    };
+    $('color-row').appendChild(d);
+  });
+}
+
+function renderSizeRow(){
+  $('size-row').innerHTML='';
+  TEXT_SIZES.forEach(s=>{
+    const b=document.createElement('button');
+    b.className='size-btn'+(state.edDraft.size===s?' active':'');
+    b.textContent=s;
+    b.onclick=()=>{
+      state.edDraft.size=s;
+      state.edOverlays=state.edOverlays.map(o=>o.id===state.editingOvId?{...o,size:s}:o);
+      renderSizeRow(); renderEdOverlays();
+    };
+    $('size-row').appendChild(b);
+  });
+}
+</script>
+</body>
 </html>
