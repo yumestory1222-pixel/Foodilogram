@@ -53,7 +53,7 @@ textarea,input{font-family:inherit}
 .cam-error-msg{font-size:11px;color:var(--textMute);text-align:center;line-height:1.6}
 #retry-btn{background:var(--green);color:#fff;border:none;border-radius:10px;padding:10px 28px;font-size:13px;font-weight:700}
 #flash{position:absolute;inset:0;background:white;opacity:0;pointer-events:none;border-radius:20px;transition:opacity .1s}
-#countdown-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.3)}
+#countdown-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);z-index:5}
 #countdown-num{font-size:80px;font-weight:900;color:var(--green)}
 #rec-badge{position:absolute;top:12px;left:14px;display:none;align-items:center;gap:6px;background:rgba(0,0,0,0.55);border-radius:20px;padding:4px 10px}
 .rec-dot{width:8px;height:8px;border-radius:50%;background:var(--rec);animation:pulse 1s infinite}
@@ -79,11 +79,9 @@ textarea,input{font-family:inherit}
 .flip-btn{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:6px 12px;font-size:16px;color:var(--textSub)}
 /* Shutter */
 .shutter-wrap{display:flex;justify-content:center;padding-bottom:24px;padding-top:6px}
-.shutter-ring{position:absolute;width:90px;height:90px;border-radius:50%;border:2.5px solid rgba(74,140,92,0.35);margin-top:-5px}
-.shutter-ring.rec{border-color:rgba(217,79,61,0.4)}
-.shutter{width:80px;height:80px;border-radius:50%;background:var(--green);border:3.5px solid #fff;box-shadow:0 6px 20px rgba(74,140,92,0.35);display:flex;align-items:center;justify-content:center;position:relative}
+.shutter{width:80px;height:80px;border-radius:50%;background:var(--green);border:3.5px solid #fff;box-shadow:0 6px 20px rgba(74,140,92,0.35);display:flex;align-items:center;justify-content:center;position:relative;padding:0;line-height:1;vertical-align:middle}
 .shutter.rec-mode{background:var(--rec);box-shadow:0 6px 20px rgba(217,79,61,0.4)}
-.shutter-inner{width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+.shutter-inner{width:26px;height:26px;border-radius:50%;background:#fff;display:block;flex-shrink:0;margin:0}
 .shutter-inner.vid{width:24px;height:24px;border-radius:50%}
 .shutter-inner.stop{width:22px;height:22px;border-radius:4px}
 /* Gallery */
@@ -134,7 +132,7 @@ textarea,input{font-family:inherit}
 .share-btn{flex:2;background:var(--green);border:none;border-radius:12px;padding:13px 0;font-size:14px;font-weight:700;color:#fff;box-shadow:0 4px 14px rgba(74,140,92,0.3)}
 /* Video collage */
 .vcollage-wrap{background:#0d0d0d;border-radius:18px;overflow:hidden;border:1px solid var(--border)}
-.vcollage-grid{display:grid;gap:3px;padding:3px}
+.vcollage-grid{display:grid;gap:3px;padding:3px;width:100%;aspect-ratio:9/16;position:relative}
 .vcell{position:relative;overflow:hidden;border-radius:8px;min-height:60px;transition:opacity .45s,transform .45s cubic-bezier(0.34,1.56,0.64,1)}
 .vcell.hidden{opacity:0;transform:scale(0.88)}
 .vcell video{width:100%;height:100%;object-fit:cover;display:block}
@@ -237,17 +235,10 @@ textarea,input{font-family:inherit}
       <button class="mode-btn" id="mode-video" onclick="setMode('video')">🎬 영상</button>
     </div>
     <div class="controls" id="cam-controls">
-      <div class="timer-row" id="timer-row-photo">
-        <span class="timer-lbl">⏱ 타이머</span>
-        <div class="timer-pills">
-          <button class="timer-pill active" onclick="setTimer(3)">3초</button>
-          <button class="timer-pill" onclick="setTimer(5)">5초</button>
-          <button class="timer-pill" onclick="setTimer(7)">7초</button>
-        </div>
-      </div>
-      <div class="timer-row" id="timer-row-video" style="display:none">
-        <span class="timer-lbl">⏱ 촬영 시간</span>
-        <div class="timer-pills">
+
+      <div class="timer-row" id="timer-row-video" style="display:none;flex-wrap:wrap;align-items:center;gap:8px">
+        <span class="timer-lbl">🎬 촬영</span>
+        <div class="timer-pills" id="video-timer-pills">
           <button class="timer-pill active" onclick="setTimer(3)">3초</button>
           <button class="timer-pill" onclick="setTimer(5)">5초</button>
           <button class="timer-pill" onclick="setTimer(7)">7초</button>
@@ -257,7 +248,6 @@ textarea,input{font-family:inherit}
     </div>
     <div class="shutter-wrap">
       <div style="position:relative;width:80px;height:80px">
-        <div class="shutter-ring" id="shutter-ring"></div>
         <button class="shutter" id="shutter-btn" onclick="handleShutter()">
           <div class="shutter-inner" id="shutter-inner"></div>
         </button>
@@ -304,22 +294,28 @@ textarea,input{font-family:inherit}
   </div>
 
   <!-- Collage view -->
-  <div id="collage-view" style="display:none">
-    <div id="col-mode-bar" class="mode-bar" style="display:none">
+  <div id="collage-view" style="display:none;padding:16px;overflow-y:auto">
+
+    <!-- 사진/영상 탭 -->
+    <div id="col-mode-bar" class="mode-bar" style="display:none;margin-bottom:14px">
       <button class="mode-btn active" id="col-photo-btn" onclick="setCollageMode('photo')">📷 사진</button>
       <button class="mode-btn" id="col-video-btn" onclick="setCollageMode('video')">🎬 영상</button>
     </div>
+
+    <!-- 사진 콜라주 -->
     <div id="col-photo-section">
-      <div class="ratio-row">
+      <!-- 비율 -->
+      <div class="ratio-row" style="margin-bottom:10px">
         <span class="ratio-lbl">비율</span>
-        <button class="ratio-btn active" onclick="setRatio('1:1')">■ 1:1</button>
-        <button class="ratio-btn" onclick="setRatio('3:4')">▬ 3:4</button>
+        <button class="ratio-btn active" id="ratio-1x1" onclick="setRatio('1:1')">■ 1:1</button>
+        <button class="ratio-btn" id="ratio-3x4" onclick="setRatio('3:4')">▬ 3:4</button>
       </div>
-      <div class="layout-row">
-        <button class="layout-btn active" onclick="setLayout('grid2x2')">2×2</button>
-        <button class="layout-btn" onclick="setLayout('grid2x3')">2×3</button>
-        <button class="layout-btn" onclick="setLayout('strip')">스트립</button>
-        <button class="layout-btn" onclick="setLayout('feature')">메인+서브</button>
+      <!-- 레이아웃 -->
+      <div class="layout-row" style="margin-bottom:10px">
+        <button class="layout-btn active" id="layout-grid2x2" onclick="setLayout('grid2x2')">2×2 그리드</button>
+        <button class="layout-btn" id="layout-grid2x3" onclick="setLayout('grid2x3')">2×3 그리드</button>
+        <button class="layout-btn" id="layout-strip" onclick="setLayout('strip')">스트립</button>
+        <button class="layout-btn" id="layout-feature" onclick="setLayout('feature')">메인+서브</button>
       </div>
       <div style="font-size:11px;color:var(--textMute);margin-bottom:10px" id="col-photo-info"></div>
       <div class="collage-canvas-wrap">
@@ -330,11 +326,22 @@ textarea,input{font-family:inherit}
         <button class="share-btn" onclick="shareCollage()">🔗 공유하기</button>
       </div>
     </div>
+
+    <!-- 영상 콜라주 -->
     <div id="col-video-section" style="display:none">
-      <div class="vcollage-info">
-        <span class="vcollage-info-txt" id="vcol-info-txt"></span>
-        <span class="vcollage-badge" id="vcol-layout-badge"></span>
+      <!-- 영상 레이아웃 선택 -->
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--textSub);margin-bottom:6px">레이아웃 (최대 클립 수)</div>
+        <div class="layout-row" style="flex-wrap:wrap;gap:6px">
+          <button class="layout-btn active" id="vlayout-1x1" onclick="setVLayout('1x1',1)">1×1 · 1클립</button>
+          <button class="layout-btn" id="vlayout-1x2" onclick="setVLayout('1x2',2)">1×2 · 2클립</button>
+          <button class="layout-btn" id="vlayout-1x3" onclick="setVLayout('1x3',3)">1×3 · 3클립</button>
+          <button class="layout-btn" id="vlayout-1x4" onclick="setVLayout('1x4',4)">1×4 · 4클립</button>
+          <button class="layout-btn" id="vlayout-1x5" onclick="setVLayout('1x5',5)">1×5 · 5클립</button>
+          <button class="layout-btn" id="vlayout-2x3" onclick="setVLayout('2x3',6)">2×3 · 6클립</button>
+        </div>
       </div>
+      <div style="font-size:11px;color:var(--textMute);margin-bottom:10px" id="vcol-info-txt"></div>
       <div class="vcollage-wrap">
         <div class="vcollage-grid" id="vcollage-grid"></div>
         <div class="vcollage-bar">
@@ -342,8 +349,15 @@ textarea,input{font-family:inherit}
           <span class="vcollage-badge" id="vcol-clips"></span>
         </div>
       </div>
-      <div class="vcollage-hint">🌿 클립 수에 따라 레이아웃이 자동 적용됩니다 · 탭하면 재생/정지</div>
+      <div class="vcollage-hint" style="margin-top:12px;padding:10px 14px;background:var(--mint);border-radius:12px;font-size:11px;color:var(--greenDk);line-height:1.6">
+        🌿 탭하면 재생/정지
+      </div>
+      <div class="save-share-bar">
+        <button class="save-btn2" onclick="saveVideoCollage()">💾 저장</button>
+        <button class="share-btn" onclick="shareVideoCollage()">🔗 공유하기</button>
+      </div>
     </div>
+
   </div>
 
 </div><!-- /content -->
@@ -400,7 +414,7 @@ const state = {
   recTimer: null, stream: null, recorder: null, chunks: [],
   selPhotos: [], selVideos: [],
   deleteMode: false, delPhotos: [], delVideos: [],
-  collageMode: 'photo', photoLayout: 'grid2x2', photoRatio: '1:1',
+  collageMode: 'photo', photoLayout: 'grid2x2', photoRatio: '1:1', videoLayout: '1x1', videoMaxClips: 1,
   colPhotoIdx: null, colVideoIdx: null,
   editingType: null, editingIdx: null,
   edOverlays: [], editingOvId: null,
@@ -413,7 +427,11 @@ const TEXT_COLORS = ['#ffffff','#FFE066','#7DFFB3','#FF7D7D','#7DB8FF','#FFAF7D'
 const TEXT_SIZES  = [11,14,18,24,30];
 
 // ── Helpers ───────────────────────────────────────────────────
-const fmtTime = d => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+const fmtTime = d => {
+  const h=d.getHours(), m=String(d.getMinutes()).padStart(2,'0');
+  const ampm=h<12?'AM':'PM', h12=h%12||12;
+  return `${String(h12).padStart(2,'0')}:${m} ${ampm}`;
+};
 const fmtDate = d => `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
 const fmtDateKo = d => ['일','월','화','수','목','금','토'][d.getDay()]+'요일';
 const fmtDur = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
@@ -473,81 +491,100 @@ function setMode(m) {
   state.captureMode = m;
   $('mode-photo').classList.toggle('active', m==='photo');
   $('mode-video').classList.toggle('active', m==='video');
-  $('timer-row-photo').style.display = m==='photo'?'flex':'none';
-  $('timer-row-video').style.display = m==='video'?'flex':'none';
-  const btn=$('shutter-btn'), inner=$('shutter-inner');
-  btn.classList.toggle('rec-mode', m==='video');
-  inner.className='shutter-inner'+(m==='video'?' vid':'');
+  // show/hide video timer row
+  const trv=$('timer-row-video');
+  if(trv) trv.style.display = m==='video' ? 'flex' : 'none';
+  // reset shutter look
+  const btn=$('shutter-btn');
+  const inner=$('shutter-inner');
+  if(btn) btn.classList.remove('rec-mode');
+  if(inner) inner.className = 'shutter-inner' + (m==='video' ? ' vid' : '');
 }
 
 function setTimer(s) {
   state.timerSec = s;
-  document.querySelectorAll('.timer-pill').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.timer-pill').forEach(b=>{ if(b.textContent===s+'초') b.classList.add('active'); });
+  // only update pills in currently visible timer row
+  const row = $('timer-row-video');
+  if(row) {
+    row.querySelectorAll('.timer-pill').forEach(b=>{
+      b.classList.toggle('active', b.textContent === s+'초');
+    });
+  }
 }
 
 function handleShutter() {
-  if(state.captureMode==='video') { state.recording ? stopRecording() : startRecording(); return; }
-  let c = state.timerSec;
-  $('countdown-overlay').style.display='flex';
-  $('countdown-num').textContent = c;
-  state.countdown = setInterval(()=>{
-    c--;
-    if(c<=0){ clearInterval(state.countdown); $('countdown-overlay').style.display='none'; takePhoto(); }
-    else $('countdown-num').textContent = c;
-  },1000);
+  console.log('shutter', state.captureMode, state.recording);
+  if(state.captureMode==='video') {
+    if(state.recording) stopRecording();
+    else startRecording();
+    return;
+  }
+  // photo — instant
+  takePhoto();
 }
 
 function takePhoto() {
   const vid = $('cam-video');
+  if(!vid || !vid.videoWidth) { console.warn('video not ready'); return; }
   const c = document.createElement('canvas');
-  c.width=vid.videoWidth||640; c.height=vid.videoHeight||480;
-  const ctx=c.getContext('2d');
-  if(state.facingMode==='user'){ctx.save();ctx.translate(c.width,0);ctx.scale(-1,1);}
-  ctx.drawImage(vid,0,0);
+  c.width = vid.videoWidth; c.height = vid.videoHeight;
+  const ctx = c.getContext('2d');
+  if(state.facingMode==='user') { ctx.save(); ctx.translate(c.width,0); ctx.scale(-1,1); }
+  ctx.drawImage(vid, 0, 0);
   if(state.facingMode==='user') ctx.restore();
-  const ts=Date.now();
-  state.photos.unshift({src:c.toDataURL('image/jpeg',0.92),ts,overlays:[]});
+  state.photos.unshift({ src: c.toDataURL('image/jpeg',0.92), ts: Date.now(), overlays:[] });
   updateStats();
-  // flash
-  const fl=$('flash'); fl.style.opacity='0.75';
-  setTimeout(()=>fl.style.opacity='0',160);
+  const fl=$('flash');
+  if(fl){ fl.style.transition='none'; fl.style.opacity='0.75'; setTimeout(()=>{ fl.style.transition='opacity .3s'; fl.style.opacity='0'; },80); }
 }
 
 async function startRecording() {
   if(!state.stream) return;
+  if(state.recording) return;
   state.chunks=[];
-  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
-  state.recorder=new MediaRecorder(state.stream,{mimeType:mime});
-  state.recorder.ondataavailable=e=>{if(e.data.size>0)state.chunks.push(e.data);};
+  // 지원 mime 타입 선택
+  const mimes=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];
+  const mime=mimes.find(m=>{ try{return MediaRecorder.isTypeSupported(m);}catch(e){return false;} })||'video/webm';
+  try {
+    state.recorder=new MediaRecorder(state.stream,{mimeType:mime});
+  } catch(e) {
+    try { state.recorder=new MediaRecorder(state.stream); }
+    catch(e2) { alert('이 브라우저는 영상 녹화를 지원하지 않아요'); return; }
+  }
+  state.recorder.ondataavailable=e=>{if(e.data&&e.data.size>0)state.chunks.push(e.data);};
   state.recorder.onstop=async()=>{
-    const blob=new Blob(state.chunks,{type:mime});
+    const usedMime=state.recorder.mimeType||mime;
+    const blob=new Blob(state.chunks,{type:usedMime});
     const thumb=await extractThumb(blob);
     state.videos.unshift({blob,thumb,ts:Date.now(),duration:state.recDur,overlays:[]});
     state.recDur=0; updateStats();
-    $('rec-badge').style.display='none';
-    $('shutter-btn').classList.remove('rec-mode');
-    $('shutter-inner').className='shutter-inner vid';
+    const rb=$('rec-badge'); if(rb) rb.style.display='none';
+    const sb=$('shutter-btn'); if(sb) sb.classList.remove('rec-mode');
+    const si=$('shutter-inner'); if(si) si.className='shutter-inner vid';
+    state.recording=false;
   };
   state.recorder.start(100);
   state.recording=true;
-  $('rec-badge').style.display='flex';
-  $('shutter-btn').classList.add('rec-mode');
-  $('shutter-inner').className='shutter-inner stop';
+  const rb=$('rec-badge'); if(rb) rb.style.display='flex';
+  const sb=$('shutter-btn'); if(sb) sb.classList.add('rec-mode');
+  const si=$('shutter-inner'); if(si) si.className='shutter-inner stop';
   let sec=0;
   state.recTimer=setInterval(()=>{
     sec++; state.recDur=sec;
-    $('rec-txt').textContent=`REC ${fmtDur(sec)}`;
+    const rt=$('rec-txt'); if(rt) rt.textContent=`REC ${fmtDur(sec)}`;
     if(sec>=state.timerSec) stopRecording();
   },1000);
 }
 
 function stopRecording() {
-  if(state.recorder&&state.recording){
-    clearInterval(state.recTimer);
-    state.recorder.stop();
-    state.recording=false;
+  clearInterval(state.recTimer);
+  if(state.recorder && state.recording){
+    try { state.recorder.stop(); } catch(e) { console.warn('stop error',e); }
   }
+  state.recording=false;
+  const rb=$('rec-badge'); if(rb) rb.style.display='none';
+  const sb=$('shutter-btn'); if(sb) sb.classList.remove('rec-mode');
+  const si=$('shutter-inner'); if(si) si.className='shutter-inner vid';
 }
 
 async function extractThumb(blob) {
@@ -695,13 +732,15 @@ function setCollageMode(m){
 
 function setRatio(r){
   state.photoRatio=r;
-  document.querySelectorAll('.ratio-btn').forEach(b=>b.classList.toggle('active',b.textContent.includes(r.replace(':',''))||b.textContent===`▬ ${r}`||b.textContent===`■ ${r}`));
+  document.querySelectorAll('.ratio-btn').forEach(b=>b.classList.remove('active'));
+  const map={'1:1':'ratio-1x1','3:4':'ratio-3x4'};
+  if($(map[r])) $(map[r]).classList.add('active');
   drawPhotoCollage();
 }
 function setLayout(l){
   state.photoLayout=l;
   document.querySelectorAll('.layout-btn').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
+  const el=$('layout-'+l); if(el) el.classList.add('active');
   drawPhotoCollage();
 }
 
@@ -712,8 +751,8 @@ function renderCollage(){
   if(!hasV&&hasP) state.collageMode='photo';
   $('col-photo-btn').classList.toggle('active',state.collageMode==='photo');
   $('col-video-btn').classList.toggle('active',state.collageMode==='video');
-  $('col-photo-section').style.display=state.collageMode==='photo'?'':'none';
-  $('col-video-section').style.display=state.collageMode==='video'?'':'none';
+  $('col-photo-section').style.display=state.collageMode==='photo'?'block':'none';
+  $('col-video-section').style.display=state.collageMode==='video'?'block':'none';
   if(state.collageMode==='photo') drawPhotoCollage();
   else renderVideoCollage();
 }
@@ -766,10 +805,10 @@ function drawPhotoCollage(){
     const barY=H-pad-barH;
     ctx.fillStyle=T.green;
     ctx.beginPath(); ctx.roundRect(pad,barY,innerW,barH,4); ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font=`12px sans-serif`; ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillStyle='#fff'; ctx.font=`24px sans-serif`; ctx.textAlign='left'; ctx.textBaseline='middle';
     const d=new Date(photos[0].ts);
     ctx.fillText(`${fmtDate(d)}  ${fmtDateKo(d)}`,pad+10,barY+barH/2);
-    ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.textAlign='right';
+    ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.textAlign='right';
     ctx.fillText(`🌿 foodi logram · ${photos.length} shots`,W-pad-10,barY+barH/2);
   };
 
@@ -838,7 +877,7 @@ function getColVideos(){
 }
 
 function getVLayout(n){
-  if(n<=1) return {cols:1,rows:1,tpl:'1fr','rowTpl':'1fr'};
+  if(n<=1) return {cols:1,rows:1,tpl:'1fr',rowTpl:'1fr'};
   if(n===2) return {cols:1,rows:2,tpl:'1fr',rowTpl:'1fr 1fr'};
   if(n===3) return {cols:1,rows:3,tpl:'1fr',rowTpl:'1fr 1fr 1fr'};
   if(n===4) return {cols:1,rows:4,tpl:'1fr',rowTpl:'repeat(4,1fr)'};
@@ -846,12 +885,22 @@ function getVLayout(n){
   return {cols:2,rows:3,tpl:'1fr 1fr',rowTpl:'repeat(3,1fr)'};
 }
 
+function setVLayout(layout, maxClips){
+  state.videoLayout = layout;
+  state.videoMaxClips = maxClips;
+  // update active button
+  document.querySelectorAll('[id^="vlayout-"]').forEach(b=>b.classList.remove('active'));
+  const el=$('vlayout-'+layout); if(el) el.classList.add('active');
+  renderVideoCollage();
+}
+
 function renderVideoCollage(){
-  const videos=getColVideos();
-  const n=Math.min(videos.length,6);
-  const lbl=n===1?'1×1':n===2?'1×2':n===3?'1×3':n===4?'1×4':n===5?'1×5':'2×3';
-  $('vcol-info-txt').textContent=`${n}개 클립 · 탭하면 재생/정지`;
-  $('vcol-layout-badge').textContent=`${lbl} · 9:16`;
+  const allVideos=getColVideos();
+  const n=Math.min(allVideos.length, state.videoMaxClips||6);
+  const videos=allVideos.slice(0,n);
+  const lbl=state.videoLayout||'auto';
+  const infoEl=$('vcol-info-txt');
+  if(infoEl) infoEl.textContent=`${n}개 클립 선택 · 9:16`;
   if(videos.length>0){
     const d=new Date(videos[0].ts);
     $('vcol-date').textContent=`${fmtDate(d)} ${fmtDateKo(d)}`;
@@ -859,17 +908,20 @@ function renderVideoCollage(){
   }
   const {tpl,rowTpl}=getVLayout(n);
   const grid=$('vcollage-grid');
+  // 항상 9:16 (1080×1920) 고정
   grid.style.gridTemplateColumns=tpl;
   grid.style.gridTemplateRows=rowTpl;
-  grid.style.aspectRatio=`9/${16*n/Math.min(n,2>n?1:n<=5?1:2)*Math.max(1,n<=5?n:3/2)}`;
-  // simpler: set explicit height via paddingBottom
-  const aspect=n<=5?`${n*16*100/9}%`:`${3*16*100/(9*2)}%`;
+  grid.style.width='100%';
+  grid.style.aspectRatio='9/16';
+  grid.style.height='';
+  grid.style.paddingBottom='';
   grid.style.position='relative';
-  const wrapper=grid.parentElement;
-  wrapper.style.position='relative';
 
-  // clear old cells
-  grid.innerHTML='';
+  // clear old cells — wrap in absolute container for padding-bottom trick
+  grid.innerHTML='<div id="vcollage-inner" style="position:absolute;inset:0;display:grid;gap:3px;padding:3px;grid-template-columns:'+tpl+';grid-template-rows:'+rowTpl+'"></div>';
+  const inner=grid.querySelector('#vcollage-inner');
+  // each cell fills its grid slot fully
+  
   if(state.vcRevealTimer) clearInterval(state.vcRevealTimer);
   state.vcRevealed=[]; state.vcAllRevealed=false;
 
@@ -882,8 +934,7 @@ function renderVideoCollage(){
     cell.innerHTML=`
       <video src="${url}" loop muted playsinline style="width:100%;height:100%;object-fit:cover;display:block"></video>
       ${v.overlays&&v.overlays.length?v.overlays.map(ov=>`<span style="position:absolute;left:${ov.x}%;top:${ov.y}%;transform:translate(-50%,-50%);font-size:${ov.size||18}px;font-weight:700;color:${ov.color||'#fff'};text-shadow:0 1px 6px rgba(0,0,0,0.7);pointer-events:none">${ov.text}</span>`).join(''):''}
-      <div class="vcell-ts">${fmtTime(new Date(v.ts))}</div>
-      <div class="vcell-dur">${fmtDur(v.duration||0)}</div>
+
       <div class="vcell-play"><div class="vcell-play-btn">▶</div></div>`;
     cell.onclick=()=>{
       const vid=cell.querySelector('video');
@@ -892,7 +943,7 @@ function renderVideoCollage(){
       playing?vid.play():vid.pause();
       overlay.style.display=playing?'none':'flex';
     };
-    grid.appendChild(cell);
+    (inner||grid).appendChild(cell);
     cells.push(cell);
   });
 
@@ -912,6 +963,152 @@ function renderVideoCollage(){
       state.vcAllRevealed=true;
     }
   },1000);
+}
+
+// ── Video Collage Save/Share ─────────────────────────────────
+// ── 영상 콜라주를 MediaRecorder로 WebM 영상으로 렌더링 ────────
+async function renderVideoCollageToBlob(onProgress) {
+  const W=1080, H=1920, FPS=30;
+  const canvas=document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+
+  const grid=$('vcollage-grid');
+  const inner=grid.querySelector('#vcollage-inner')||grid;
+  const videoEls=Array.from(inner.querySelectorAll('video'));
+  const cells=Array.from(inner.querySelectorAll('.vcell'));
+  const allVideos=getColVideos();
+  const gridRect=grid.getBoundingClientRect();
+
+  // 셀 위치 사전 계산
+  const cellLayouts=cells.map((cell,i)=>{
+    const cr=cell.getBoundingClientRect();
+    return {
+      x:Math.round((cr.left-gridRect.left)/gridRect.width*W),
+      y:Math.round((cr.top-gridRect.top)/gridRect.height*H),
+      w:Math.round(cr.width/gridRect.width*W),
+      h:Math.round(cr.height/gridRect.height*H),
+    };
+  });
+
+  // 가장 긴 영상 길이 기준으로 총 재생 시간 결정
+  const durations=videoEls.map(v=>v.duration||3);
+  const totalDur=Math.max(...durations, 1);
+  const totalFrames=Math.ceil(totalDur*FPS);
+
+  // 모든 영상 처음부터 재생 준비
+  videoEls.forEach(v=>{ v.currentTime=0; v.muted=true; });
+  await Promise.all(videoEls.map(v=>new Promise(r=>{
+    v.onseeked=r; v.currentTime=0;
+  })));
+
+  // MediaRecorder — MP4 우선, 없으면 WebM (고화질)
+  const stream=canvas.captureStream(FPS);
+  const mimes=[
+    'video/mp4;codecs=avc1.42E01E,mp4a.40.2', // H.264 + AAC
+    'video/mp4;codecs=avc1',
+    'video/mp4',
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm',
+  ];
+  const mime=mimes.find(m=>{ try{return MediaRecorder.isTypeSupported(m);}catch(e){return false;} })||'video/webm';
+  console.log('Recording mime:', mime);
+  const recorder=new MediaRecorder(stream,{mimeType:mime, videoBitsPerSecond:16000000});
+  const chunks=[];
+  recorder.ondataavailable=e=>{ if(e.data&&e.data.size>0) chunks.push(e.data); };
+
+  return new Promise((resolve,reject)=>{
+    recorder.onstop=()=>{
+      const blob=new Blob(chunks,{type:mime});
+      resolve(blob);
+    };
+    recorder.start(100);
+
+    // 모든 영상 동시 재생 시작
+    videoEls.forEach(v=>v.play().catch(()=>{}));
+
+    let frame=0;
+    const interval=1000/FPS;
+    const startTime=performance.now();
+
+    function drawFrame(){
+      const elapsed=(performance.now()-startTime)/1000;
+      if(elapsed>=totalDur){ recorder.stop(); videoEls.forEach(v=>v.pause()); return; }
+
+      ctx.fillStyle='#0d0d0d';
+      ctx.fillRect(0,0,W,H);
+
+      videoEls.forEach((vid,i)=>{
+        const {x,y,w,h}=cellLayouts[i]||{};
+        if(!w||!h) return;
+        try{
+          ctx.save();
+          ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip();
+          const vw=vid.videoWidth||w, vh=vid.videoHeight||h;
+          const scale=Math.max(w/vw,h/vh);
+          const sw=vw*scale, sh=vh*scale;
+          ctx.drawImage(vid,x+(w-sw)/2,y+(h-sh)/2,sw,sh);
+          // 텍스트 오버레이
+          if(allVideos[i]&&allVideos[i].overlays){
+            allVideos[i].overlays.forEach(ov=>{
+              ctx.font=`bold ${ov.size||18}px sans-serif`;
+              ctx.textAlign='center'; ctx.textBaseline='middle';
+              ctx.shadowColor='rgba(0,0,0,0.7)'; ctx.shadowBlur=8;
+              ctx.fillStyle=ov.color||'#fff';
+              ctx.fillText(ov.text||'',(x+(ov.x/100)*w),(y+(ov.y/100)*h));
+              ctx.shadowBlur=0;
+            });
+          }
+          ctx.restore();
+        }catch(e){}
+      });
+
+      frame++;
+      if(onProgress) onProgress(elapsed/totalDur);
+      setTimeout(drawFrame, interval);
+    }
+    drawFrame();
+  });
+}
+
+async function saveVideoCollage(){
+  const btn=event.currentTarget;
+  btn.textContent='⏳ 렌더링 중...'; btn.disabled=true;
+  try{
+    const blob=await renderVideoCollageToBlob(p=>{
+      btn.textContent=`⏳ ${Math.round(p*100)}%`;
+    });
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const ext=blob.type.includes('mp4')?'mp4':'webm';
+    a.download=`foodilogram_${Date.now()}.${ext}`;
+    a.href=url; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+  }catch(e){ alert('저장 실패: '+e.message); console.error(e); }
+  finally{ btn.textContent='💾 저장'; btn.disabled=false; }
+}
+
+async function shareVideoCollage(){
+  const btn=event.currentTarget;
+  btn.textContent='⏳ 처리 중...'; btn.disabled=true;
+  try{
+    const blob=await renderVideoCollageToBlob();
+    const ext=blob.type.includes('mp4')?'mp4':'webm';
+    const file=new File([blob],`foodilogram_${Date.now()}.${ext}`,{type:blob.type});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:'foodi logram',text:'오늘의 식단 기록 🌿'}); return; }
+      catch(e){ if(e.name==='AbortError') return; }
+    }
+    // 공유 불가 시 저장으로 폴백
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const ext2=blob.type.includes('mp4')?'mp4':'webm';
+    a.download=`foodilogram_${Date.now()}.${ext2}`;
+    a.href=url; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+  }catch(e){ alert('공유 실패: '+e.message); console.error(e); }
+  finally{ btn.textContent='🔗 공유하기'; btn.disabled=false; }
 }
 
 // ── Text Editor ───────────────────────────────────────────────
