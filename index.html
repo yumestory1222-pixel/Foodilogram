@@ -123,7 +123,7 @@ textarea,input{font-family:inherit}
 .ratio-btn{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:7px 0;font-size:12px;color:var(--textSub);transition:all .15s}
 .ratio-btn.active{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
 .layout-row{display:flex;gap:6px;margin-bottom:10px}
-.layout-btn{flex:1;background:var(--surface2);border:none;border-radius:8px;padding:7px 4px;font-size:10px;color:var(--textSub)}
+.layout-btn{flex:1;background:var(--surface2);border:none;border-radius:8px;padding:8px 4px;font-size:10px;color:var(--textSub);line-height:1.4;text-align:center}
 .layout-btn.active{background:var(--green);color:#fff;font-weight:700}
 .collage-canvas-wrap{border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(74,140,92,0.12)}
 #collage-canvas{width:100%;display:block;border-radius:14px}
@@ -346,14 +346,20 @@ textarea,input{font-family:inherit}
 
     <!-- 영상 콜라주 -->
     <div id="col-video-section" style="display:none">
+      <!-- 영상 비율 선택 -->
+      <div class="ratio-row" style="margin-bottom:10px">
+        <span class="ratio-lbl">비율</span>
+        <button class="ratio-btn active" id="vratio-9x16" onclick="setVRatio('9:16')">▮ 9:16</button>
+        <button class="ratio-btn" id="vratio-3x4" onclick="setVRatio('3:4')">▬ 3:4</button>
+      </div>
       <!-- 영상 레이아웃 선택 -->
       <div style="margin-bottom:10px">
         <div style="font-size:11px;color:var(--textSub);margin-bottom:6px">레이아웃 (최대 클립 수)</div>
-        <div class="layout-row" style="flex-wrap:wrap;gap:6px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
           <button class="layout-btn active" id="vlayout-1x1" onclick="setVLayout('1x1',1)">1×1 · 1클립</button>
           <button class="layout-btn" id="vlayout-1x2" onclick="setVLayout('1x2',2)">1×2 · 2클립</button>
           <button class="layout-btn" id="vlayout-1x3" onclick="setVLayout('1x3',3)">1×3 · 3클립</button>
-          <button class="layout-btn" id="vlayout-1x4" onclick="setVLayout('1x4',4)">1×4 · 4클립</button>
+          <button class="layout-btn" id="vlayout-1x4" onclick="setVLayout('1x4',4)"><span id="vlayout-1x4-label">1×4</span> · 4클립</button>
           <button class="layout-btn" id="vlayout-1x5" onclick="setVLayout('1x5',5)">1×5 · 5클립</button>
           <button class="layout-btn" id="vlayout-2x3" onclick="setVLayout('2x3',6)">2×3 · 6클립</button>
         </div>
@@ -432,7 +438,7 @@ const state = {
   recTimer: null, stream: null, recorder: null, chunks: [],
   selPhotos: [], selVideos: [],
   deleteMode: false, delPhotos: [], delVideos: [],
-  collageMode: 'photo', photoLayout: 'grid2x2', photoRatio: '1:1', videoLayout: '1x1', videoMaxClips: 1,
+  collageMode: 'photo', photoLayout: 'grid2x2', photoRatio: '1:1', videoLayout: '1x1', videoMaxClips: 1, videoRatio: '9:16',
   colPhotoIdx: null, colVideoIdx: null,
   editingType: null, editingIdx: null,
   edOverlays: [], editingOvId: null,
@@ -1083,11 +1089,14 @@ function getColVideos(){
   return state.videos.slice(0,6);
 }
 
-function getVLayout(n){
+function getVLayout(n, ratio){
   if(n<=1) return {cols:1,rows:1,tpl:'1fr',rowTpl:'1fr'};
   if(n===2) return {cols:1,rows:2,tpl:'1fr',rowTpl:'1fr 1fr'};
   if(n===3) return {cols:1,rows:3,tpl:'1fr',rowTpl:'1fr 1fr 1fr'};
-  if(n===4) return {cols:1,rows:4,tpl:'1fr',rowTpl:'repeat(4,1fr)'};
+  if(n===4){
+    if(ratio==='3:4') return {cols:2,rows:2,tpl:'1fr 1fr',rowTpl:'1fr 1fr'};
+    return {cols:1,rows:4,tpl:'1fr',rowTpl:'repeat(4,1fr)'};
+  }
   if(n===5) return {cols:1,rows:5,tpl:'1fr',rowTpl:'repeat(5,1fr)'};
   return {cols:2,rows:3,tpl:'1fr 1fr',rowTpl:'repeat(3,1fr)'};
 }
@@ -1101,25 +1110,41 @@ function setVLayout(layout, maxClips){
   renderVideoCollage();
 }
 
+function setVRatio(ratio){
+  state.videoRatio = ratio;
+  document.querySelectorAll('#vratio-9x16,#vratio-3x4').forEach(b=>b.classList.remove('active'));
+  const map={'9:16':'vratio-9x16','3:4':'vratio-3x4'};
+  const el=$(map[ratio]); if(el) el.classList.add('active');
+  // 미리보기 영역 비율 갱신
+  const grid=$('vcollage-grid');
+  if(grid) grid.style.aspectRatio = ratio==='3:4' ? '1080/1350' : '9/16';
+  // 4클립 버튼 라벨: 3:4일 땐 2×2, 그 외엔 1×4
+  const lbl4=$('vlayout-1x4-label');
+  if(lbl4) lbl4.textContent = ratio==='3:4' ? '2×2' : '1×4';
+  renderVideoCollage();
+}
+
 function renderVideoCollage(){
   const allVideos=getColVideos();
   const n=Math.min(allVideos.length, state.videoMaxClips||6);
   const videos=allVideos.slice(0,n);
   const lbl=state.videoLayout||'auto';
+  const lbl4=$('vlayout-1x4-label');
+  if(lbl4) lbl4.textContent = state.videoRatio==='3:4' ? '2×2' : '1×4';
   const infoEl=$('vcol-info-txt');
-  if(infoEl) infoEl.textContent=`${n}개 클립 선택 · 9:16`;
+  if(infoEl) infoEl.textContent=`${n}개 클립 선택 · ${state.videoRatio||'9:16'}`;
   if(videos.length>0){
     const d=new Date(videos[0].ts);
     $('vcol-date').textContent=`${fmtDate(d)} ${fmtDateKo(d)}`;
     $('vcol-clips').textContent=`${n} clips`;
   }
-  const {tpl,rowTpl}=getVLayout(n);
+  const {tpl,rowTpl}=getVLayout(n, state.videoRatio);
   const grid=$('vcollage-grid');
-  // 항상 9:16 (1080×1920) 고정
+  // 선택한 비율 적용 (9:16 또는 3:4)
   grid.style.gridTemplateColumns=tpl;
   grid.style.gridTemplateRows=rowTpl;
   grid.style.width='100%';
-  grid.style.aspectRatio='9/16';
+  grid.style.aspectRatio = state.videoRatio==='3:4' ? '1080/1350' : '9/16';
   grid.style.height='';
   grid.style.paddingBottom='';
   grid.style.position='relative';
@@ -1181,7 +1206,8 @@ async function renderVideoCollageToBlob(onProgress) {
     await new Promise(r=>setTimeout(r,300));
   }
 
-  const W=1080, H=1920, FPS=30;
+  const W=1080, H = state.videoRatio==='3:4' ? 1350 : 1920;
+  const FPS=30;
   const canvas=document.createElement('canvas');
   canvas.width=W; canvas.height=H;
   const ctx=canvas.getContext('2d');
@@ -1198,15 +1224,18 @@ async function renderVideoCollageToBlob(onProgress) {
   }
 
   const gridRect=grid.getBoundingClientRect();
+  const barH=60; // 하단 정보 바 높이 (1080px 기준)
+  const gridH=H-barH; // 비디오 그리드가 차지할 실제 높이
 
   // 셀 위치 사전 계산 (셀 사이 여백을 명확히 주어 라운드가 보이도록 안쪽으로 패딩)
+  // 화면상 grid 비율을 그대로 따르되, 세로 방향은 gridH 영역에 맞춰 스케일
   const cellPad=6; // 1080px 캔버스 기준 셀 사이 여백
   const cellLayouts=cells.map(cell=>{
     const cr=cell.getBoundingClientRect();
     const rawX=(cr.left-gridRect.left)/gridRect.width*W;
-    const rawY=(cr.top-gridRect.top)/gridRect.height*H;
+    const rawY=(cr.top-gridRect.top)/gridRect.height*gridH;
     const rawW=cr.width/gridRect.width*W;
-    const rawH=cr.height/gridRect.height*H;
+    const rawH=cr.height/gridRect.height*gridH;
     return {
       x:Math.round(rawX+cellPad/2),
       y:Math.round(rawY+cellPad/2),
@@ -1325,6 +1354,25 @@ async function renderVideoCollageToBlob(onProgress) {
     let rafId=null;
     let stopped=false;
 
+    function drawBottomBar(){
+      ctx.fillStyle='#181818';
+      ctx.fillRect(0,gridH,W,barH);
+      const d=allVideos[0]?new Date(allVideos[0].ts):new Date();
+      ctx.font=`28px sans-serif`;
+      ctx.textAlign='left'; ctx.textBaseline='middle';
+      ctx.fillStyle='#aaa';
+      ctx.fillText(`${fmtDate(d)} ${fmtDateKo(d)}`, 28, gridH+barH/2);
+
+      const clipsTxt=`${n} clips`;
+      ctx.font=`bold 26px sans-serif`;
+      const tw=ctx.measureText(clipsTxt).width;
+      const px=W-28-tw-24, py=gridH+barH/2;
+      ctx.fillStyle='rgba(74,140,92,0.18)';
+      ctx.beginPath(); ctx.roundRect(px,py-18,tw+24,36,8); ctx.fill();
+      ctx.fillStyle='#4A8C5C';
+      ctx.fillText(clipsTxt, px+12, py);
+    }
+
     function drawFrame(){
       if(stopped) return;
       const elapsed=(performance.now()-startTime)/1000;
@@ -1363,6 +1411,8 @@ async function renderVideoCollageToBlob(onProgress) {
       for(let i=0; i<visibleCount&&i<n; i++){
         if(videoEls[i]) drawCell(i, videoEls[i]);
       }
+
+      drawBottomBar();
 
       if(onProgress) onProgress(totalDur>0 ? Math.min(elapsed/totalDur, 0.99) : 0.5);
       rafId=requestAnimationFrame(drawFrame);
